@@ -52,59 +52,34 @@ class SpikeTrain:
 
         return SpikeTrain(t, mask)
 
-    def plot2(self, ax=None, offset=0, **kwargs):
-
-        sweeps = kwargs.get('sweeps', range(self.nsweeps))
-        color = kwargs.get('color', ['C' + str(ii % 10) for ii in range(len(sweeps))])
-        if not (type(color) is list):
-            color = [color] * len(sweeps)
-        t0 = kwargs.get('t0', 0.)
-        tf = kwargs.get('tf', self.t[-1])
-        linewidth = kwargs.get('linewidth', None) if not (kwargs.get('linewidth', None) is None) else kwargs.get('lw',
-                                                                                                                 1.)
-        delta = kwargs.get('delta', .8)
-
-        if ax is None:
-            figsize = kwargs.get('figsize', (8, 5))
-            fig, ax = plt.subplots(figsize=figsize)
-
-        for ii, sw in enumerate(sweeps):
-            t_spikes_ = self.t[self.mask[:, sw]]
-            t_spikes_ = t_spikes_[(t_spikes_ >= t0) & (t_spikes_ < tf)]
-            t_spikes_ = np.array([t_spikes_] * 2)
-
-            bars = np.zeros((2, t_spikes_.shape[1])) * np.nan
-            bars[0, :] = -ii + delta / 2. -offset
-            bars[1, :] = -ii - delta / 2. -offset
-
-            ax.plot(t_spikes_, bars, '-', linewidth=linewidth, color=color[ii])
-
-        extra_range = (self.t[-1] - self.t[0]) * .005
-        ax.set_xlim(self.t[0] - extra_range, self.t[-1] + extra_range)
-        ax.set_ylim(-ii - offset - (delta / 2. + (1 - delta)), delta / 2. + (1 - delta))
-
-        return ax
-
     def plot(self, ax=None, offset=0, **kwargs):
 
         sweeps = kwargs.get('sweeps', range(self.nsweeps))
         color = kwargs.get('color', 'C0')
-        # t0 = kwargs.get('t0', 0.)
-        # tf = kwargs.get('tf', self.t[-1])
-        ms = kwargs.get('ms', 7)
 
+        marker = kwargs.get('marker', 'o')
+        ms = kwargs.get('ms', 7)
+        mew = kwargs.get('mew', 1)
+
+        no_ax = False
         if ax is None:
             figsize = kwargs.get('figsize', (8, 5))
             fig, ax = plt.subplots(figsize=figsize)
+            no_ax = True
 
-        arg_spikes = np.where(self.mask)
-
-        ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], 'o', color=color, ms=ms, mew=0)
-
-        if ax is None:
-            extra_range = (self.t[-1] - self.t[0]) * .01
-            ax.set_xlim(self.t[0] - extra_range, self.t[-1] + extra_range)
-            ax.set_ylim(-0.2, self.mask.shape[1] + 0.2)
+        mask = self.mask.copy()
+        if mask.ndim > 2:
+            mask = mask.reshape(mask.shape[0], -1, order='F')
+            mask = mask[:, ~np.any(np.isnan(mask), 0)]
+            
+        arg_spikes = np.where(mask)
+        ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], marker=marker, lw=0, color=color, ms=ms, mew=mew)
+        
+        extra_range = (self.t[-1] - self.t[0]) * .01
+        ax.set_xlim(self.t[0] - extra_range, self.t[-1] + extra_range)
+        
+        if no_ax:
+            ax.set_ylim(-0.2, mask.shape[1] + 0.2)
 
         return ax
 
