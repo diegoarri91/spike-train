@@ -79,7 +79,7 @@ class SpikeTrain:
         ax.set_xlim(self.t[0] - extra_range, self.t[-1] + extra_range)
         
         if no_ax:
-            ax.set_ylim(-0.2, mask.shape[1] + 0.2)
+            ax.set_ylim(-0.2, mask.shape[1] - 1 + 0.2)
 
         return ax
 
