@@ -43,6 +43,7 @@ class SpikeTrain:
         t0 = t0 if t0 is not None else self.t[0]
         tf = tf if tf is not None else self.t[-1] + self.dt
         arg0, argf = searchsorted(self.t, [t0, tf])
+#         print(arg0, argf)
 
         t = self.t[arg0:argf]
         mask = self.mask[arg0:argf]
@@ -51,10 +52,22 @@ class SpikeTrain:
             t = t - t[0]
 
         return SpikeTrain(t, mask)
+    
+    def isi_distribution(self, t0=None, tf=None):
+        st = self.restrict(t0=t0, tf=tf, reset_time=True)
+#         print(st.mask.shape, st.t.shape, st.mask[:, 0])
+        isis = []
+        for sw in range(self.nsweeps):
+            if np.sum(st.mask[:, sw]) >= 2:
+                isis.append(np.diff(st.t[st.mask[:, sw]], axis=0))
+            else:
+                isis.append(np.array([]))
+        isis = np.concatenate(isis, axis=0)
+        return isis
 
-    def plot(self, ax=None, offset=0, **kwargs):
+    def plot(self, ax=None, offset=0, sweeps=None, **kwargs):
 
-        sweeps = kwargs.get('sweeps', range(self.nsweeps))
+#         sweeps = kwargs.get('sweeps', range(self.nsweeps))
         color = kwargs.get('color', 'C0')
 
         marker = kwargs.get('marker', 'o')
@@ -71,6 +84,11 @@ class SpikeTrain:
         if mask.ndim > 2:
             mask = mask.reshape(mask.shape[0], -1, order='F')
             mask = mask[:, ~np.any(np.isnan(mask), 0)]
+        
+        if sweeps is not None:
+            if isinstance(sweeps, int):
+                sweeps = np.array([sweeps])
+            mask = mask[:, sweeps]
             
         arg_spikes = np.where(mask)
         ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], marker=marker, lw=0, color=color, ms=ms, mew=mew)
@@ -281,12 +299,17 @@ class SpikeTrain:
         # for ii, st in enumerate(sts):
         # correlation_matrix[ii*st.nsweeps:(ii+1)*st.nsweeps, ii*st.nsweeps:(ii+1)*st.nsweeps] = st.correlation_matrix(st, delta)
 
-    def get_spike_count(self, bins, average_sweeps=False):
+    def spike_count(self, tbins):
+        arg_bins = searchsorted(self.t, tbins)
+        spk_count = np.stack([np.sum(self.mask[arg0:argf], 0) for arg0, argf in zip(arg_bins[:-1], arg_bins[1:])], 0) 
+        return spk_count
+        
+    def spike_count2(self, bins, average_sweeps=False):
         # 08/09/2018
         # Given arbitrary time bins computes the spike counts in those bins for each sweep
         # unless average=True
         
-        spk_count = np.zeros( (len(bins) - 1, self.nsweeps) )
+        spk_count = np.zeros((len(bins) - 1, self.nsweeps))
         
         mask_spk = self.mask
         
