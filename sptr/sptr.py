@@ -53,7 +53,18 @@ class SpikeTrain:
 
         return SpikeTrain(t, mask)
     
-    def isi_distribution(self, t0=None, tf=None):
+    def subsample(self, dt):
+        
+        n_sample = get_arg(dt, self.dt)
+        t = self.t[::n_sample]
+        arg_spikes = np.where(self.mask)
+        arg_spikes = (np.array(np.floor(arg_spikes[0] / n_sample), dtype=int), ) + arg_spikes[1:]
+        mask_spikes = np.zeros((len(t), ) + self.mask.shape[1:], dtype=bool)
+        mask_spikes[arg_spikes] = True
+        
+        return SpikeTrain(t, mask_spikes)
+    
+    def isi_distribution(self, t0=None, tf=None, concatenate=True):
         st = self.restrict(t0=t0, tf=tf, reset_time=True)
 #         print(st.mask.shape, st.t.shape, st.mask[:, 0])
         isis = []
@@ -62,7 +73,8 @@ class SpikeTrain:
                 isis.append(np.diff(st.t[st.mask[:, sw]], axis=0))
             else:
                 isis.append(np.array([]))
-        isis = np.concatenate(isis, axis=0)
+        if concatenate:
+            isis = np.concatenate(isis, axis=0)
         return isis
 
     def plot(self, ax=None, offset=0, sweeps=None, **kwargs):
@@ -299,9 +311,12 @@ class SpikeTrain:
         # for ii, st in enumerate(sts):
         # correlation_matrix[ii*st.nsweeps:(ii+1)*st.nsweeps, ii*st.nsweeps:(ii+1)*st.nsweeps] = st.correlation_matrix(st, delta)
 
-    def spike_count(self, tbins):
+    def spike_count(self, tbins, normed=False):
         arg_bins = searchsorted(self.t, tbins)
-        spk_count = np.stack([np.sum(self.mask[arg0:argf], 0) for arg0, argf in zip(arg_bins[:-1], arg_bins[1:])], 0) 
+        if not normed:
+            spk_count = np.stack([np.sum(self.mask[arg0:argf], 0) for arg0, argf in zip(arg_bins[:-1], arg_bins[1:])], 0) 
+        else:
+            spk_count = np.stack([np.sum(self.mask[arg0:argf], 0) / (argf - arg0) for arg0, argf in zip(arg_bins[:-1], arg_bins[1:])], 0) 
         return spk_count
         
     def spike_count2(self, bins, average_sweeps=False):
