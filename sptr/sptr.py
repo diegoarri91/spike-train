@@ -394,3 +394,4 @@ class SpikeTrain:
         t_sta = np.arange(-argl, argr + 1, 1) * self.dt
 
         return t_sta, sta
+    
