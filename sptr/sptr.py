@@ -53,6 +53,9 @@ class SpikeTrain:
 
         return SpikeTrain(t, mask)
     
+    def sweeps(self, idx):
+        return SpikeTrain(self.t, self.mask[:, idx])
+    
     def subsample(self, dt):
         
         n_sample = get_arg(dt, self.dt)
