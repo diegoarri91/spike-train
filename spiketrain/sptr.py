@@ -84,10 +84,10 @@ class SpikeTrain:
 
 #         sweeps = kwargs.get('sweeps', range(self.nsweeps))
         color = kwargs.get('color', 'C0')
-
         marker = kwargs.get('marker', 'o')
         ms = kwargs.get('ms', 7)
         mew = kwargs.get('mew', 1)
+        label = kwargs.get('label', 1)
 
         no_ax = False
         if ax is None:
@@ -106,7 +106,7 @@ class SpikeTrain:
             mask = mask[:, sweeps]
             
         arg_spikes = np.where(mask)
-        ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], marker=marker, lw=0, color=color, ms=ms, mew=mew)
+        ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], marker=marker, lw=0, color=color, ms=ms, mew=mew, label=label)
         
         extra_range = (self.t[-1] - self.t[0]) * .01
         ax.set_xlim(self.t[0] - extra_range, self.t[-1] + extra_range)
