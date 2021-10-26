@@ -1,0 +1,3 @@
+[submodule "spiketrain/kernel"]
+	path = spiketrain/kernel
+	url = git@github.com:diegoarri91/kernel.git
