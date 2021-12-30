@@ -163,13 +163,15 @@ class SpikeTrains:
             fig, ax = plt.subplots(figsize=figsize)
             x_extra_range = (self.t[-1] - self.t[0]) * .04
             ax.set_xlim(self.t[0] - x_extra_range, self.t[-1] + x_extra_range)
-            y_extra_range = (self.ntrains - 1) * .04
-            ax.set_ylim(-y_extra_range, self.ntrains - 1 + y_extra_range)
+            size = np.prod(self.mask.shape[1:])
+            y_extra_range = (size - 1) * .04
+            ax.set_ylim(-y_extra_range, size - 1 + y_extra_range)
 
         if self.mask.ndim == 2:
             arg_spikes = np.where(self.mask)
         else:
             arg_spikes = np.where(self.mask.reshape(len(self.t), -1, order='F'))
+            
         ax.plot(self.t[arg_spikes[0]], offset + arg_spikes[1], linestyle='', **kwargs)
 
         return ax
